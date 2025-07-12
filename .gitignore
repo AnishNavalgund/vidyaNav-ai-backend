@@ -1,0 +1,8 @@
+creds.json
+.env
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.log
+uploads/
