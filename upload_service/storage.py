@@ -1,12 +1,43 @@
 import uuid
-from pathlib import Path
+from google.cloud import storage
+from dotenv import load_dotenv
+import os
+from datetime import timedelta
 
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+load_dotenv()
+BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
 
-def save_file(file_bytes: bytes, filename: str) -> str:
-    upload_file_id = str(uuid.uuid4())
-    save_path = UPLOAD_DIR / f"{upload_file_id}_{filename}"
-    with open(save_path, "wb") as f:
-        f.write(file_bytes)
-    return str(save_path)
+def upload_file(file_bytes: bytes, filename: str) -> str:
+
+    file_type = filename.split(".")[-1]
+    if file_type == "pdf":
+        content_type = "application/pdf"
+    elif file_type == "jpg" or file_type == "jpeg":
+        content_type = "image/jpeg"
+    elif file_type == "png":
+        content_type = "image/png"
+    elif file_type == "docx" or file_type == "doc":
+        content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    elif file_type == "pptx" or file_type == "ppt":
+        content_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    elif file_type == "txt":
+        content_type = "text/plain"
+    elif file_type == "csv":
+        content_type = "text/csv"
+    else:
+        raise ValueError(f"Unsupported file type: {file_type}")
+    
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(BUCKET_NAME)
+
+    filename = f"{uuid.uuid4()}_{filename}"
+    blob = bucket.blob(filename)
+
+    blob.upload_from_string(file_bytes, content_type=content_type)
+    url = blob.generate_signed_url(expiration=timedelta(minutes=30))
+
+    return {
+        "file_url": url,
+        "file_type": file_type,
+        "filename": filename
+    }
