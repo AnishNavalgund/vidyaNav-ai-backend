@@ -41,10 +41,13 @@ async def generate_worksheets(image_url: str, grade_input: str, language: str = 
 
     result = await worksheet_agent.run(input_parts)
 
-    #print("\n >>>>>>>>>>>>>>>>> OUTPUT FROM GEMINI: \n")
+    #print("\n >>>>>>>>>>>>>>>>> RESULT FROM GEMINI: \n")
     #print(result)
 
     output = result.output
+
+    #print("\n >>>>>>>>>>>>>>>>> OUTPUT FROM GEMINI: \n")
+    #print(output)
 
     return {
         k: v for k, v in output.model_dump().items()
