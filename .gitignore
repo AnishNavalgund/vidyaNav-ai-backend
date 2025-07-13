@@ -6,3 +6,5 @@ __pycache__/
 .venv/
 *.log
 uploads/
+main_controller/
+data/

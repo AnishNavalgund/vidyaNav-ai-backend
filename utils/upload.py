@@ -7,7 +7,7 @@ from datetime import timedelta
 load_dotenv()
 BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
 
-def upload_file(file_bytes: bytes, filename: str) -> str:
+def upload_file_to_gcs(file_bytes: bytes, filename: str) -> str:
 
     file_type = filename.split(".")[-1]
     if file_type == "pdf":
@@ -29,12 +29,18 @@ def upload_file(file_bytes: bytes, filename: str) -> str:
     
     storage_client = storage.Client()
     bucket = storage_client.bucket(BUCKET_NAME)
-
+    
     filename = f"{uuid.uuid4()}_{filename}"
+    print("filename >>>>>>>>>>>>", filename)
     blob = bucket.blob(filename)
 
     blob.upload_from_string(file_bytes, content_type=content_type)
     url = blob.generate_signed_url(expiration=timedelta(minutes=30))
+
+    if content_type == "image/png":
+        url += "&ext=.png"
+    elif content_type == "image/jpeg":
+        url += "&ext=.jpg"
 
     return {
         "file_url": url,
