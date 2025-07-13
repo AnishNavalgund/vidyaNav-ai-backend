@@ -20,11 +20,9 @@ async def generate_worksheet(
         file_bytes = await file.read()
         upload_result = upload_file_to_gcs(file_bytes, file.filename)
 
-        grade_list = [g.strip() for g in grades.split(",")]
-
         output = await generate_worksheets(
             image_url=upload_result["file_url"],
-            grades=grade_list,
+            grade_input=grades,
             language=language
         )
         return output

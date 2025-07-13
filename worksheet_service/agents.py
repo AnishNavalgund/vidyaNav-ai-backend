@@ -19,7 +19,20 @@ worksheet_agent = Agent(
     )
 )
 
-async def generate_worksheets(image_url: str, grades: list[str], language: str = "English") -> dict:
+async def generate_worksheets(image_url: str, grade_input: str, language: str = "English") -> dict:
+
+    def process_grades(input):
+        # print(f">>> In Func {input}")
+        grades = []
+        for part in input.split(','):
+            # print(f">>>>>> Part  {part}")
+            part = part.strip()
+            if part.isdigit() and len(part) == 1:
+                grades.append(part)
+        return grades
+
+    grades = process_grades(grade_input)
+    
     input_parts = [
         f"Generate simple worksheets for the following grades: {', '.join(grades)}. "
         f"The content should be in {language}. Use the attached textbook image.",
