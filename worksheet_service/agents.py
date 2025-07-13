@@ -9,6 +9,8 @@ model = GeminiModel(
     provider=GoogleVertexProvider(region="us-central1")
 )
 worksheet_agent = Agent(
+
+    
     model=model,
     output_type=WorksheetOutput,
     deps_type=None,

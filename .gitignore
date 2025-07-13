@@ -8,3 +8,5 @@ __pycache__/
 uploads/
 main_controller/
 data/
+tts_service/
+scripts/
