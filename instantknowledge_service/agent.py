@@ -3,13 +3,12 @@ from pydantic_ai import Agent
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_vertex import GoogleVertexProvider
 
-
 model = GeminiModel(
     model_name="gemini-2.0-flash-lite",
     provider=GoogleVertexProvider(region="us-central1")
 )
 
-# Define the agent
+# Define agent with structured system prompt
 instant_knowledge_agent = Agent(
     model=model,
     output_type=AnswerResponse,
@@ -27,18 +26,3 @@ instant_knowledge_agent = Agent(
         "Only return valid JSON with no commentary or prefix."
     )
 )
-
-
-# Inference function
-async def get_instant_answer(question: str, grade_level: int, language: str) -> AnswerResponse:
-    prompt = (
-        f"Q: {question}\n"
-        f"A (for Grade {grade_level}, in {language}):"
-    )
-
-    result = await instant_knowledge_agent.run(prompt)
-
-    # Inject the actual model used
-    result.output.model_used = model.model_name
-
-    return result.output

@@ -1,12 +1,15 @@
 import os
-from fastapi import FastAPI, UploadFile, Form, HTTPException
+from fastapi import FastAPI, UploadFile, Form, HTTPException, File
+import tempfile
+import logging
 from dotenv import load_dotenv
 
 from utils.upload import upload_file_to_gcs
+
 from worksheet_service.agents import generate_worksheets
 
-from instantknowledge_service.agent import get_instant_answer
-from instantknowledge_service.schema import AnswerResponse, QuestionRequest
+from instantknowledge_service.local_rag import get_answer_with_uploaded_textbook
+from instantknowledge_service.schema import AnswerResponse
 
 
 # from tts_service.agent import generate_speech_prompt, synthesize_speech
@@ -14,6 +17,9 @@ from instantknowledge_service.schema import AnswerResponse, QuestionRequest
 
 #  Load .env at startup
 load_dotenv()
+
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
 
 app = FastAPI(title="VidyaNav-ai API")
 
@@ -38,14 +44,42 @@ async def generate_worksheet(
         raise HTTPException(status_code=400, detail=str(ve))
 
 @app.post("/instant-knowledge-upload", response_model=AnswerResponse)
-async def ask_question(request: QuestionRequest):
+async def ask_with_uploaded_textbook(
+    question: str = Form(...),
+    grade_level: int = Form(...),
+    language: str = Form(...),
+    textbook: UploadFile = File(...)
+):
+    if textbook.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+
     try:
-        response = await get_instant_answer(
-            question=request.question,
-            grade_level=request.grade_level,
-            language=request.language
+
+        file_bytes = await textbook.read()
+
+        upload_result = upload_file_to_gcs(file_bytes, textbook.filename)
+        print("Uploaded to GCS:", upload_result["filename"])
+
+        def save_temp_pdf(file_bytes: bytes, suffix: str = ".pdf") -> str:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode='wb') as tmp:
+                tmp.write(file_bytes)
+                tmp.flush()
+                os.fsync(tmp.fileno())  # Ensure data is written to disk
+            return tmp.name
+
+        temp_pdf_path = save_temp_pdf(file_bytes)
+
+        # Run RAG pipeline
+        response = await get_answer_with_uploaded_textbook(
+            question=question,
+            grade_level=grade_level,
+            language=language,
+            pdf_path=temp_pdf_path
         )
+
+        response.model_dump()["textbook_gcs_file"] = upload_result["filename"]
         return response
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

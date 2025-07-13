@@ -23,6 +23,8 @@ pypdf = "^5.8.0"
 vertexai = "^1.71.1"
 qdrant-client = "^1.14.3"
 langchain-community = "^0.3.27"
+pypdf2 = "^3.0.1"
+pdfplumber = "^0.11.7"
 
 
 [build-system]
