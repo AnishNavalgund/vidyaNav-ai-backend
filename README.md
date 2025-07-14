@@ -16,6 +16,7 @@ VidyaNav-ai is an AI-powered backend service designed to assist teachers in rura
 The project is completely done using **Google AI Ecosystem**. 
 
 ## Architecture
+A high-level architecture of the prototype.
 ![Architecture](docs/architecture.png)
 
 
@@ -93,7 +94,8 @@ and then, just `docker compose up` after that.
 The API will be available at `http://localhost:8080`.
 
 ## Frontend
-- Run the frontend server as mentioned in the frontend repository - https://github.com/AnishNavalgund/vidyaNav-ai-frontend
+- Run the frontend server as mentioned in the [frontend repository](https://github.com/AnishNavalgund/vidyaNav-ai-frontend)
+- Refer its README for more details.
 
 ## Next Steps
 1. Add Database Support: Integrate Cloud SQL to store user and request metadata.
