@@ -93,6 +93,15 @@ docker-compose up --build
 and then, just `docker compose up` after that.
 The API will be available at `http://localhost:8080`.
 
+## API Endpoints
+- `POST /visual-aid`  
+
+- `POST /generate-worksheet/`  
+
+- `POST /instant-knowledge-upload`  
+
+Check the [API documentation](http://localhost:8080/docs) for more details. (Need to run the server first)
+
 ## Frontend
 - Run the frontend server as mentioned in the [frontend repository](https://github.com/AnishNavalgund/vidyaNav-ai-frontend)
 - Refer its README for more details.
