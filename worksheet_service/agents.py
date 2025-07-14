@@ -10,8 +10,6 @@ model = GeminiModel(
     provider=GoogleVertexProvider(region="us-central1")
 )
 worksheet_agent = Agent(
-
-    
     model=model,
     output_type=WorksheetOutput,
     deps_type=None,
@@ -25,10 +23,8 @@ worksheet_agent = Agent(
 async def generate_worksheets(image_url: str, grade_input: str, language: str = "English") -> dict:
     logging.info(f"Generating worksheets for grades: {grade_input}, language: {language}")
     def process_grades(input):
-        # print(f">>> In Func {input}")
         grades = []
         for part in input.split(','):
-            # print(f">>>>>> Part  {part}")
             part = part.strip()
             if part.isdigit() and len(part) == 1:
                 grades.append(part)
@@ -46,13 +42,7 @@ async def generate_worksheets(image_url: str, grade_input: str, language: str = 
     output = result.output
     logging.info("Worksheet generation by worksheet_agent completed.")
 
-    #print("\n >>>>>>>>>>>>>>>>> RESULT FROM GEMINI: \n")
-    #print(result)
-
     output = result.output
-
-    #print("\n >>>>>>>>>>>>>>>>> OUTPUT FROM GEMINI: \n")
-    #print(output)
 
     return {
         k: v for k, v in output.model_dump().items()

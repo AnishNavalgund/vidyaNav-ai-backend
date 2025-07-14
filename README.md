@@ -1,13 +1,5 @@
 # VidyaNav-ai Backend
 
-[![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python)](https://www.python.org/)
-[![Poetry](https://img.shields.io/badge/Poetry-Dependency--Manager-8c8cff?logo=python)](https://python-poetry.org/)
-[![Pydantic-AI](https://img.shields.io/badge/Pydantic-AI-blue?logo=pydantic)](https://ai.pydantic.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.116.1-green?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20Storage-blue?logo=googlecloud)](https://cloud.google.com/)
-[![Docker](https://img.shields.io/badge/Docker-Container-blue?logo=docker)](https://www.docker.com/)
-[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 Sahayak - AI teaching assistant for multi-grade students in rural areas of India.
 
 ## Related Repositories
@@ -109,7 +101,8 @@ The API will be available at `http://localhost:8080`.
 3. TTS: Add TTS to the backend for audio generation.
 4. Add Unit Tests: Implement mock-based tests for all services. 
 5. Setup CI/CD: Configure GitHub Actions for automated testing, building, and deployment workflows.
-6. Deployment: Deploy services to Google Cloud Run and frontend to Firebase Hosting / Vercel
+6. Take care of linting and formatting (black, isort)
+7. Deployment: Deploy services to Google Cloud Run and frontend to Firebase Hosting / Vercel
 
 ## Contact
 Email: anishk.navalgund@gmail.com

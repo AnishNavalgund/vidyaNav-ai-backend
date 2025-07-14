@@ -20,8 +20,6 @@ from typing import List
 import tempfile
 import traceback
 
-# from tts_service.agent import generate_speech_prompt, synthesize_speech
-# from pydantic import BaseModel
 
 #  Load .env at startup
 load_dotenv()
@@ -34,7 +32,7 @@ app = FastAPI(title="VidyaNav-ai API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:9002"],  # or ["*"] for dev
+    allow_origins=["http://localhost:9002"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,18 +105,3 @@ async def generate_visual_aid_endpoint(request: VisualAidRequest):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-#class TTSRequest(BaseModel):
-#    text: str
-#
-#
-#class TTSResponse(BaseModel):
-#    prompt: str
-#    audio_base64: str
-#
-#
-#@app.post("/tts", response_model=TTSResponse)
-#async def text_to_speech(request: TTSRequest):
-#    spoken_prompt = await generate_speech_prompt(request.text)
-#    audio_b64 = synthesize_speech(spoken_prompt)
-#    return TTSResponse(prompt=spoken_prompt, audio_base64=audio_b64)
