@@ -1,5 +1,3 @@
-# instantknowledge_service/schema.py
-
 from typing import Optional, List
 from pydantic import BaseModel, Field
 

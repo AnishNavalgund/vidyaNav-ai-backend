@@ -8,7 +8,6 @@ model = GeminiModel(
     provider=GoogleVertexProvider(region="us-central1")
 )
 
-# Define agent with structured system prompt
 instant_knowledge_agent = Agent(
     model=model,
     output_type=AnswerResponse,
