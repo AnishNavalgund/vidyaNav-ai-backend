@@ -11,6 +11,7 @@ from worksheet_service.agents import generate_worksheets
 from instantknowledge_service.local_rag import get_answer_with_uploaded_textbook
 from instantknowledge_service.schema import AnswerResponse
 
+from fastapi.middleware.cors import CORSMiddleware
 
 # from tts_service.agent import generate_speech_prompt, synthesize_speech
 # from pydantic import BaseModel
@@ -21,7 +22,16 @@ load_dotenv()
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
 
+
 app = FastAPI(title="VidyaNav-ai API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:9002"],  # or ["*"] for dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/generate-worksheet/")
 async def generate_worksheet(
