@@ -26,6 +26,9 @@ langchain-community = "^0.3.27"
 pypdf2 = "^3.0.1"
 pdfplumber = "^0.11.7"
 vertex-ai-imagen = "^1.1.4"
+nltk = "^3.9.1"
+spacy = "^3.8.7"
+pysbd = "^0.3.4"
 
 
 [build-system]

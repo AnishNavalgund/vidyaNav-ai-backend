@@ -1,8 +1,10 @@
 import os
-from fastapi import FastAPI, UploadFile, Form, HTTPException, File
-import tempfile
+
 import logging
 from dotenv import load_dotenv
+
+from fastapi import FastAPI, UploadFile, Form, HTTPException, File
+from fastapi.middleware.cors import CORSMiddleware
 
 from utils.upload import upload_file_to_gcs
 
@@ -14,7 +16,8 @@ from instantknowledge_service.schema import AnswerResponse
 from visualaid_service.agent import generate_visual_aid
 from visualaid_service.schema import VisualAidRequest, VisualAidOutput
 
-from fastapi.middleware.cors import CORSMiddleware
+from typing import List
+import tempfile
 import traceback
 
 # from tts_service.agent import generate_speech_prompt, synthesize_speech
@@ -23,9 +26,9 @@ import traceback
 #  Load .env at startup
 load_dotenv()
 
+
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
-
 
 app = FastAPI(title="VidyaNav-ai API")
 
@@ -37,13 +40,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
 @app.post("/generate-worksheet/")
 async def generate_worksheet(
     file: UploadFile,
     grades: str = Form(...),
     language: str = Form("English")
 ):
-    logging.info(f"Received request to generate worksheet for grades: {grades}, language: {language}")
+    logging.info(f"Received request to generate worksheet")
     try:
         file_bytes = await file.read()
         upload_result = upload_file_to_gcs(file_bytes, file.filename)
@@ -69,7 +74,6 @@ async def ask_with_uploaded_textbook(
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
     try:
-        logging.info(f"Received instant knowledge request for grade: {grade_level}, language: {language}")
         file_bytes = await textbook.read()
         upload_result = upload_file_to_gcs(file_bytes, textbook.filename)
         logging.info(f"Textbook uploaded to GCS")
@@ -90,13 +94,12 @@ async def ask_with_uploaded_textbook(
             pdf_path=temp_pdf_path
         )
 
-        response.model_dump()["textbook_gcs_file"] = upload_result["filename"]
         logging.info("Instant knowledge answer generated successfully.")
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/visual-aid", response_model=VisualAidOutput)
+@app.post("/visual-aid", response_model=List[VisualAidOutput])
 async def generate_visual_aid_endpoint(request: VisualAidRequest):
     logging.info(f"Received visual aid request: {request}")
     try:

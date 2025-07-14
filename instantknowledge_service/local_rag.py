@@ -5,42 +5,97 @@ from typing import List
 from PyPDF2 import PdfReader
 import re
 import logging
+import pysbd
 
 from vertexai.preview.language_models import TextEmbeddingModel, TextEmbeddingInput
 from instantknowledge_service.agent import instant_knowledge_agent, model
 from instantknowledge_service.schema import AnswerResponse
 
+import re
+import logging
+from typing import List
+from PyPDF2 import PdfReader
+import pysbd
 
-def extract_clean_chunks_from_pdf(pdf_path: str, chunk_size: int = 10) -> List[str]:
-    # Read PDF
+
+def extract_semantic_chunks(
+    pdf_path: str,
+    chunk_size: int = 4,
+    overlap: int = 1,
+    language: str = "english"
+) -> List[str]:
+
+    lang_map = {
+        "english": "en",
+        "en": "en",
+        "hindi": "hi",
+        "hi": "hi"
+    }
+
+    lang_key = lang_map.get(language.lower().strip())
+    if not lang_key:
+        raise ValueError(f"Unsupported language: {language}")
+
     reader = PdfReader(pdf_path)
     raw_text = " ".join([page.extract_text() or "" for page in reader.pages])
 
     if not raw_text.strip():
         raise ValueError("No readable text extracted from PDF.")
 
-    # clean_text = re.sub(r"\s+", " ", raw_text)  # Normalize whitespace
-    clean_text = re.sub(r"(https?:\/\/[^\s]+)", "", raw_text)  # Remove URLs
-    # clean_text = re.sub(r"\b(?:Page|FormEditor|Editor|Contact form|You are here)\b.*", "", clean_text)  # Remove known boilerplate
-
-    # Keep punctuation, hyphens, parentheses
-    clean_text = re.sub(r"[^a-zA-Z0-9\s.,!?;:'\"()\-]", "", clean_text)
-
+    clean_text = re.sub(r"(https?://\S+)", "", raw_text)
+    clean_text = re.sub(r"[^a-zA-Z\u0900-\u097F\u0C80-\u0CFF0-9\s.,!?;:'\"()\-]", "", clean_text)
     clean_text = clean_text.strip()
-    words = clean_text.split()
 
-    logging.info(f"Extractraction completed")
+    try:
+        segmenter = pysbd.Segmenter(language=lang_key, clean=True)
+        sentences = segmenter.segment(clean_text)
+    except Exception as e:
+        raise ValueError(f"Error using pysbd for language '{lang_key}': {e}")
 
-    chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+    chunks = []
+    for i in range(0, len(sentences), chunk_size - overlap):
+        chunk = " ".join(sentences[i:i + chunk_size])
+        if len(chunk.split()) >= 10:
+            chunks.append(chunk.strip())
 
-    filtered_chunks = [chunk.strip() for chunk in chunks if len(chunk.strip().split()) >= 10]
-    logging.info(f"Chunking done")
-
-    if not filtered_chunks:
-        logging.warning("No valid chunks after filtering")
+    if not chunks:
+        logging.warning("No valid chunks extracted.")
         return [clean_text]
 
-    return filtered_chunks
+    logging.info(f"Extracted {len(chunks)} multilingual chunks.")
+    return chunks
+
+
+#def extract_clean_chunks_from_pdf(pdf_path: str, chunk_size: int = 10) -> List[str]:
+#    # Read PDF
+#    reader = PdfReader(pdf_path)
+#    raw_text = " ".join([page.extract_text() or "" for page in reader.pages])
+#
+#    if not raw_text.strip():
+#        raise ValueError("No readable text extracted from PDF.")
+#
+#    # clean_text = re.sub(r"\s+", " ", raw_text)  # Normalize whitespace
+#    clean_text = re.sub(r"(https?:\/\/[^\s]+)", "", raw_text)  # Remove URLs
+#    # clean_text = re.sub(r"\b(?:Page|FormEditor|Editor|Contact form|You are here)\b.*", "", clean_text)  # Remove known boilerplate
+#
+#    # Keep punctuation, hyphens, parentheses
+#    clean_text = re.sub(r"[^a-zA-Z0-9\s.,!?;:'\"()\-]", "", clean_text)
+#
+#    clean_text = clean_text.strip()
+#    words = clean_text.split()
+#
+#    logging.info(f"Extractraction completed")
+#
+#    chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+#
+#    filtered_chunks = [chunk.strip() for chunk in chunks if len(chunk.strip().split()) >= 10]
+#    logging.info(f"Chunking done")
+#
+#    if not filtered_chunks:
+#        logging.warning("No valid chunks after filtering")
+#        return [clean_text]
+#
+#    return filtered_chunks
 
 
 def cosine_similarity(vec1, vec2):
@@ -63,7 +118,7 @@ async def get_answer_with_uploaded_textbook(
 ) -> AnswerResponse:
     embed_model = TextEmbeddingModel.from_pretrained("text-embedding-005")
 
-    chunks = extract_clean_chunks_from_pdf(pdf_path)
+    chunks = extract_semantic_chunks(pdf_path, language=language)
     if not chunks:
         raise ValueError("No readable text found in uploaded PDF.")
 
@@ -95,8 +150,22 @@ async def get_answer_with_uploaded_textbook(
         f"Student Question: {question}\n"
         f"Answer:"
     )
+
     logging.info(f"Agent called")
     result = await instant_knowledge_agent.run(prompt)
+    print(f">>>>>>>>> Result: {result}")
+    
     result.output.model_used = model.model_name
+    
+    output_text = result.output.answer.lower()
+    result.output.analogy_used = any(
+        phrase in output_text
+        for phrase in ["just like", "imagine you're", "like a", "think of it as"]
+    )
+
+    # Add top chunks
     result.output.source_chunks = [chunk[:150] + "..." for chunk in top_chunks]
+
+    print(f">>>>>>> FINAL Result: {result.output}")
+
     return result.output

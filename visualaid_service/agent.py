@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import logging
 import os
 from utils.upload import upload_file_to_gcs
+import uuid
 
 logger = logging.getLogger("visual_aid_service")
 load_dotenv()
@@ -42,27 +43,54 @@ async def generate_visual_aid(request: VisualAidRequest) -> VisualAidOutput:
         aspect_ratio="1:1",
         count=request.count
     )
-    print(" \n >>> image =", image)
-    print(" \n >>> type(image) =", type(image))
-    local_path = "generated_image.png"
-    image.save(local_path)
-    print(f"\n >>> Image Saved local ")
 
-    with open(local_path, "rb") as f:
-        file_bytes = f.read()
+    image_list = image if isinstance(image, list) else [image]
+    
+    outputs = []
 
-    upload_result = upload_file_to_gcs(file_bytes, filename="visual_aid.png")
-    image_url = upload_result["file_url"]
+    for idx, img in enumerate(image_list):
+        # Save locally
+        local_path = f"generated_image_{uuid.uuid4().hex}.png"
+        img.save(local_path)
+        print(" >>> Image Saved local ")
 
-    output = VisualAidOutput(
-        image_url= image_url,
-        caption=request.prompt,
-        topic=request.prompt.title(),
-    )
+        # Upload to GCS
+        with open(local_path, "rb") as f:
+            file_bytes = f.read()
 
-    print(f"\n >>>>> Output: {output}")
+        upload_result = upload_file_to_gcs(file_bytes, filename="visual_aid.png")
+        image_url = upload_result["file_url"]
 
-    return output
+        outputs.append(VisualAidOutput(
+            image_url=image_url,
+            caption=request.prompt,
+            topic=request.prompt.title(),
+            grade_range="Primary School"
+        ))
+        
+    # flattinng list of dicts
+    print(" >>>>> Output:", [o.model_dump() for o in outputs])
+    
+    return [o.model_dump() for o in outputs]
+
+    #print(" \n >>> image =", image)
+    #print(" \n >>> type(image) =", type(image))
+    #local_path = "generated_image.png"
+    #image.save(local_path)
+    #print(f"\n >>> Image Saved local ")
+#
+    #with open(local_path, "rb") as f:
+    #    file_bytes = f.read()
+#
+    #upload_result = upload_file_to_gcs(file_bytes, filename="visual_aid.png")
+    #image_url = upload_result["file_url"]
+#
+    #output = VisualAidOutput(
+    #    image_url= image_url,
+    #    caption=request.prompt,
+    #    topic=request.prompt.title(),
+    #)
+
 
 # visual_aid_agent = Agent(
 #     model=ImagenModel(),

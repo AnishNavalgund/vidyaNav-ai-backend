@@ -1,7 +1,7 @@
 FROM python:3.10-slim
 
 # Install dependencies
-RUN apt-get update && apt-get install -y gcc libglib2.0-0 libsm6 libxext6 libxrender-dev
+RUN apt-get update && apt-get install -y gcc libglib2.0-0 libsm6 libxext6 libxrender-dev 
 
 # Set working directory
 WORKDIR /app
