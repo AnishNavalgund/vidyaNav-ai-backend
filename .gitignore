@@ -10,3 +10,5 @@ main_controller/
 data/
 tts_service/
 scripts/
+.env.docker
+generated_image.png

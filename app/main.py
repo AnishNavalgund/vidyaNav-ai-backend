@@ -11,7 +11,11 @@ from worksheet_service.agents import generate_worksheets
 from instantknowledge_service.local_rag import get_answer_with_uploaded_textbook
 from instantknowledge_service.schema import AnswerResponse
 
+from visualaid_service.agent import generate_visual_aid
+from visualaid_service.schema import VisualAidRequest, VisualAidOutput
+
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
 # from tts_service.agent import generate_speech_prompt, synthesize_speech
 # from pydantic import BaseModel
@@ -50,8 +54,8 @@ async def generate_worksheet(
         )
         return output
 
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/instant-knowledge-upload", response_model=AnswerResponse)
 async def ask_with_uploaded_textbook(
@@ -91,6 +95,15 @@ async def ask_with_uploaded_textbook(
         return response
 
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/visual-aid", response_model=VisualAidOutput)
+async def generate_visual_aid_endpoint(request: VisualAidRequest):
+    try:
+        print("request sent >>>> ", request)
+        return await generate_visual_aid(request)
+    except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 #class TTSRequest(BaseModel):
