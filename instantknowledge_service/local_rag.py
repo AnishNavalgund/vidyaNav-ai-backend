@@ -15,7 +15,7 @@ def extract_clean_chunks_from_pdf(pdf_path: str, chunk_size: int = 10) -> List[s
     # Read PDF
     reader = PdfReader(pdf_path)
     raw_text = " ".join([page.extract_text() or "" for page in reader.pages])
-    logging.info(f"[PDF] Extracted {len(raw_text)} words from PDF.")
+
     if not raw_text.strip():
         raise ValueError("No readable text extracted from PDF.")
 
@@ -29,15 +29,15 @@ def extract_clean_chunks_from_pdf(pdf_path: str, chunk_size: int = 10) -> List[s
     clean_text = clean_text.strip()
     words = clean_text.split()
 
-    logging.info(f"[PDF] Extracted {len(words)} words from PDF.")
+    logging.info(f"Extractraction completed")
 
     chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
 
     filtered_chunks = [chunk.strip() for chunk in chunks if len(chunk.strip().split()) >= 10]
-    logging.info(f"[PDF] Final chunk count: {len(filtered_chunks)}")
+    logging.info(f"Chunking done")
 
     if not filtered_chunks:
-        logging.warning("[PDF] No valid chunks after filtering — using full document as fallback.")
+        logging.warning("No valid chunks after filtering")
         return [clean_text]
 
     return filtered_chunks
@@ -84,7 +84,7 @@ async def get_answer_with_uploaded_textbook(
     reverse=True)
 
     top_chunks = [r["chunk"] for r in ranked_chunks[:3]]
-    logging.info(f"[RAG] Passing top {len(top_chunks)} chunks to Gemini.")
+    logging.info(f"Passing top chunks to Gemini.")
 
     context_str = "\n\n".join([f"📘 Context Snippet:\n{chunk}" for chunk in top_chunks])
 
@@ -95,7 +95,7 @@ async def get_answer_with_uploaded_textbook(
         f"Student Question: {question}\n"
         f"Answer:"
     )
-
+    logging.info(f"Agent called")
     result = await instant_knowledge_agent.run(prompt)
     result.output.model_used = model.model_name
     result.output.source_chunks = [chunk[:150] + "..." for chunk in top_chunks]

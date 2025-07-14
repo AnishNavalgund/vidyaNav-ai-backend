@@ -3,6 +3,7 @@ from worksheet_service.schemas import WorksheetOutput
 
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_vertex import GoogleVertexProvider
+import logging
 
 model = GeminiModel(
     model_name="gemini-2.5-flash",
@@ -22,7 +23,7 @@ worksheet_agent = Agent(
 )
 
 async def generate_worksheets(image_url: str, grade_input: str, language: str = "English") -> dict:
-
+    logging.info(f"Generating worksheets for grades: {grade_input}, language: {language}")
     def process_grades(input):
         # print(f">>> In Func {input}")
         grades = []
@@ -42,6 +43,8 @@ async def generate_worksheets(image_url: str, grade_input: str, language: str = 
     ]
 
     result = await worksheet_agent.run(input_parts)
+    output = result.output
+    logging.info("Worksheet generation by worksheet_agent completed.")
 
     #print("\n >>>>>>>>>>>>>>>>> RESULT FROM GEMINI: \n")
     #print(result)

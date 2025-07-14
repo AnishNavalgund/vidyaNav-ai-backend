@@ -43,17 +43,18 @@ async def generate_worksheet(
     grades: str = Form(...),
     language: str = Form("English")
 ):
+    logging.info(f"Received request to generate worksheet for grades: {grades}, language: {language}")
     try:
         file_bytes = await file.read()
         upload_result = upload_file_to_gcs(file_bytes, file.filename)
-
+        logging.info(f"File uploaded to storage")
         output = await generate_worksheets(
             image_url=upload_result["file_url"],
             grade_input=grades,
             language=language
         )
+        logging.info("Worksheet generation successful.")
         return output
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -68,12 +69,10 @@ async def ask_with_uploaded_textbook(
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
     try:
-
+        logging.info(f"Received instant knowledge request for grade: {grade_level}, language: {language}")
         file_bytes = await textbook.read()
-
         upload_result = upload_file_to_gcs(file_bytes, textbook.filename)
-        print("Uploaded to GCS:", upload_result["filename"])
-
+        logging.info(f"Textbook uploaded to GCS")
         def save_temp_pdf(file_bytes: bytes, suffix: str = ".pdf") -> str:
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode='wb') as tmp:
                 tmp.write(file_bytes)
@@ -92,15 +91,15 @@ async def ask_with_uploaded_textbook(
         )
 
         response.model_dump()["textbook_gcs_file"] = upload_result["filename"]
+        logging.info("Instant knowledge answer generated successfully.")
         return response
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/visual-aid", response_model=VisualAidOutput)
 async def generate_visual_aid_endpoint(request: VisualAidRequest):
+    logging.info(f"Received visual aid request: {request}")
     try:
-        print("request sent >>>> ", request)
         return await generate_visual_aid(request)
     except Exception as e:
         traceback.print_exc()

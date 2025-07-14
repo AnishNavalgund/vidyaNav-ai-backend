@@ -3,6 +3,7 @@ from google.cloud import storage
 from dotenv import load_dotenv
 import os
 from datetime import timedelta
+import logging
 
 load_dotenv()
 BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
@@ -36,6 +37,7 @@ def upload_file_to_gcs(file_bytes: bytes, filename: str) -> str:
 
     blob.upload_from_string(file_bytes, content_type=content_type)
     url = blob.generate_signed_url(expiration=timedelta(minutes=30))
+    logging.info(f"File uploaded to GCS bucket {BUCKET_NAME} as {filename}, url generated.")
 
     if content_type == "image/png":
         url += "&ext=.png"
