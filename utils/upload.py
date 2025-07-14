@@ -32,7 +32,6 @@ def upload_file_to_gcs(file_bytes: bytes, filename: str) -> str:
     bucket = storage_client.bucket(BUCKET_NAME)
     
     filename = f"{uuid.uuid4()}_{filename}"
-    print("filename >>>>>>>>>>>>", filename)
     blob = bucket.blob(filename)
 
     blob.upload_from_string(file_bytes, content_type=content_type)
