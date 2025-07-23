@@ -12,6 +12,8 @@ VidyaNav-ai is an AI-powered backend service designed to assist teachers in rura
 - **Instant knowledge Q&A** from uploaded textbooks (PDFs) using local Retrieval-Augmented Generation (RAG). Upload a textbook PDF and ask questions; get simple, analogy-rich answers suitable for students with AI confidence score
 - **Visual aid generation** for creating chalkboard-style educational diagrams for classroom use. Generate educational diagrams for classroom topics, tailored for blackboard use.
 
+Supported languages: **English, Hindi, Kannada, German**
+
 ## Feat
 The project is completely done using **Google AI Ecosystem**. 
 
