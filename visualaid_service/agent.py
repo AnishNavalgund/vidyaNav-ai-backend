@@ -46,15 +46,15 @@ async def generate_visual_aid(request: VisualAidRequest) -> VisualAidOutput:
         local_path = f"generated_image_{uuid.uuid4().hex}.png"
         img.save(local_path)
 
-        # Upload to GCS
-        with open(local_path, "rb") as f:
-            file_bytes = f.read()
+        # dont upload to GCS
+        # with open(local_path, "rb") as f:
+        #     file_bytes = f.read()
 
-        upload_result = upload_file_to_gcs(file_bytes, filename="visual_aid.png")
-        image_url = upload_result["file_url"]
+        # upload_result = upload_file_to_gcs(file_bytes, filename="visual_aid.png")
+        # image_url = upload_result["file_url"]
 
         outputs.append(VisualAidOutput(
-            image_url=image_url,
+            image_url=local_path,
             caption=request.prompt,
             topic=request.prompt.title(),
             grade_range="Primary School"
