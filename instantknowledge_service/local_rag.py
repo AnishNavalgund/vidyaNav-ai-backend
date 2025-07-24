@@ -81,11 +81,21 @@ async def get_answer_with_uploaded_textbook(
         key=lambda x: x["score"],
         reverse=True)
     top_chunks = [r["chunk"] for r in ranked_chunks[:3]]
+    # Fallback: if no good chunks
+    if not top_chunks or all(r["score"] < 0.2 for r in ranked_chunks[:3]):
+        return AnswerResponse(
+            answer="Sorry, I could not find the answer in your uploaded PDF.",
+            analogy_used=False,
+            confidence_score=0.0,
+            model_used="gemini-2.0-flash-lite",
+            source_chunks=[]
+        )
     logging.info(f"Passing top chunks to Gemini.")
     context_str = "\n\n".join([f"📘 Context Snippet:\n{chunk}" for chunk in top_chunks])
     prompt = (
         f"You are helping a Grade {grade_level} student understand a concept in {language}.\n"
-        f"Use simple, relatable explanations. Try to include analogies relevant to Indian classrooms.\n\n"
+        f"Use simple, relatable explanations. Try to include analogies relevant to Indian classrooms.\n"
+        f"If the answer is not in the context, say 'I could not find the answer in the uploaded PDF.'\n\n"
         f"{context_str}\n\n"
         f"Student Question: {question}\n"
         f"Answer:"
@@ -94,4 +104,8 @@ async def get_answer_with_uploaded_textbook(
     result = get_instant_knowledge_answer(prompt)
     result.model_used = "gemini-2.0-flash-lite"
     result.source_chunks = [chunk[:150] + "..." for chunk in top_chunks]
+    # If the answer is 'not found', set confidence and source_chunks accordingly
+    if "i could not find the answer" in result.answer.lower():
+        result.confidence_score = 0.0
+        result.source_chunks = []
     return result
