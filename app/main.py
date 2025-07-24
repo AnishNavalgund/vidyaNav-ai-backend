@@ -50,9 +50,10 @@ async def generate_worksheet(
     try:
         file_bytes = await file.read()
         upload_result = upload_file_to_gcs(file_bytes, file.filename)
-        logging.info(f"File uploaded to storage")
+        logging.info(f"Upload result: file_url={upload_result['file_url']}, file_type={upload_result['file_type']}, filename={upload_result['filename']}")
+        logging.info(f"Calling generate_worksheets with file_url={upload_result['file_url']}, grades={grades}, language={language}")
         output = await generate_worksheets(
-            image_url=upload_result["file_url"],
+            file_url=upload_result["file_url"],
             grade_input=grades,
             language=language
         )
