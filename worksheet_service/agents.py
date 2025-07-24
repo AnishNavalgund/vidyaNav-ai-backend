@@ -1,7 +1,4 @@
-from pydantic_ai import Agent
 from worksheet_service.schemas import WorksheetOutput
-from pydantic_ai.models.gemini import GeminiModel
-from pydantic_ai.providers.google_vertex import GoogleVertexProvider
 import logging
 import pytesseract
 from PIL import Image, UnidentifiedImageError
@@ -10,25 +7,11 @@ from io import BytesIO
 from deep_translator import GoogleTranslator
 from langchain.agents import initialize_agent, Tool
 from langchain_google_vertexai import VertexAI
+from langchain.output_parsers import PydanticOutputParser
 import mimetypes
 import PyPDF2
 import docx
 import pdfplumber
-
-model = GeminiModel(
-    model_name="gemini-2.5-flash",
-    provider=GoogleVertexProvider(region="us-central1")
-)
-worksheet_agent = Agent(
-    model=model,
-    output_type=WorksheetOutput,
-    deps_type=None,
-    system_prompt=(
-        "You are a helpful AI assistant for teachers in rural Indian schools. "
-        "You are given an image of a textbook page. Generate simple, age-appropriate worksheets "
-        "for the requested grade levels and return them as a JSON dictionary."
-    )
-)
 
 def ocr_tool(image_url: str) -> str:
     try:
@@ -146,6 +129,7 @@ translate_tool_lc = Tool(
 )
 
 llm_lc = VertexAI(model_name="gemini-2.5-flash")
+parser = PydanticOutputParser(pydantic_object=WorksheetOutput)
 
 async def generate_worksheets(file_url: str, grade_input: str, language: str = "English") -> dict:
     tools = [ocr_tool_lc, pdf_tool_lc, docx_tool_lc, translate_tool_lc]
@@ -163,10 +147,9 @@ async def generate_worksheets(file_url: str, grade_input: str, language: str = "
     lang_code = get_lang_code(language)
     if lang_code != "en":
         extracted_text = agent.run(f"Translate the following text to {language}: {extracted_text}")
-    prompt = f"Generate simple, age-appropriate worksheets for the following grades: {grade_input}. The content should be in {language}. Use this extracted textbook text: {extracted_text}. Return a JSON object with keys grade_1 to grade_6, each containing the worksheet for that grade (if requested)."
-    result = await worksheet_agent.run([prompt])
-    # grade_input could be "2,3,4" or "2"
-    requested_grades = [f"grade_{g.strip()}" for g in grade_input.split(",") if g.strip().isdigit()]
-    output = result.output.model_dump()
-    filtered_output = {k: v for k, v in output.items() if k in requested_grades}
-    return filtered_output
+    prompt = f"Generate simple, age-appropriate worksheets for the following grades: {grade_input}. The content should be in {language}. Use this extracted textbook text: {extracted_text}. Return a JSON object with keys grade_1 to grade_6, each containing the worksheet for that grade (if requested). {parser.get_format_instructions()}"
+    llm_response = llm_lc.invoke(prompt)
+    result = parser.parse(llm_response)
+    result.model_used = "gemini-2.5-flash"  # or whatever model you use
+    result.source_chunks = extracted_text  # if you want to include them
+    return result
