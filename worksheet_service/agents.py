@@ -13,6 +13,7 @@ from langchain_google_vertexai import VertexAI
 import mimetypes
 import PyPDF2
 import docx
+import pdfplumber
 
 model = GeminiModel(
     model_name="gemini-2.5-flash",
@@ -53,7 +54,20 @@ def extract_text_from_pdf(pdf_url: str) -> str:
         with pdf_bytes:
             reader = PyPDF2.PdfReader(pdf_bytes)
             text = " ".join([page.extract_text() or "" for page in reader.pages])
-        return text if text.strip() else "[No text extracted from PDF]"
+            if text.strip():
+                return text
+            # Fallback to OCR if no text extracted
+            logging.info("[Worksheet Agent] No text found in PDF, using OCR fallback.")
+            pdf_bytes.seek(0)
+            ocr_text = ""
+            with pdfplumber.open(pdf_bytes) as pdf:
+                for i, page in enumerate(pdf.pages):
+                    try:
+                        img = page.to_image(resolution=300).original
+                        ocr_text += pytesseract.image_to_string(img) + "\n"
+                    except Exception as e:
+                        logging.warning(f"[Worksheet Agent] OCR failed for PDF page {i}: {e}")
+            return ocr_text if ocr_text.strip() else "[No text extracted from PDF, even with OCR]"
     except Exception as e:
         return f"[PDF extraction failed: {str(e)}]"
 
@@ -68,7 +82,20 @@ def extract_text_from_docx(docx_url: str) -> str:
         with docx_bytes:
             doc = docx.Document(docx_bytes)
             text = " ".join([para.text for para in doc.paragraphs])
-        return text if text.strip() else "[No text extracted from DOCX]"
+            if text.strip():
+                return text
+            # Fallback to OCR for images in DOCX
+            logging.info("[Worksheet Agent] No text found in DOCX, using OCR fallback.")
+            ocr_text = ""
+            for rel in doc.part.rels.values():
+                if "image" in rel.target_ref:
+                    try:
+                        img_bytes = rel.target_part.blob
+                        img = Image.open(BytesIO(img_bytes))
+                        ocr_text += pytesseract.image_to_string(img) + "\n"
+                    except Exception as e:
+                        logging.warning(f"[Worksheet Agent] OCR failed for DOCX image: {e}")
+            return ocr_text if ocr_text.strip() else "[No text extracted from DOCX, even with OCR]"
     except Exception as e:
         return f"[DOCX extraction failed: {str(e)}]"
 
