@@ -4,8 +4,9 @@ from visualaid_service.schema import VisualAidRequest, VisualAidOutput
 from dotenv import load_dotenv
 import logging
 import os
-from utils.upload import upload_file_to_gcs
 import uuid
+from google.cloud import storage
+from datetime import timedelta
 
 logger = logging.getLogger("visual_aid_service")
 load_dotenv()
@@ -46,15 +47,14 @@ async def generate_visual_aid(request: VisualAidRequest) -> VisualAidOutput:
         local_path = f"generated_image_{uuid.uuid4().hex}.png"
         img.save(local_path)
 
-        # dont upload to GCS
-        # with open(local_path, "rb") as f:
-        #     file_bytes = f.read()
-
-        # upload_result = upload_file_to_gcs(file_bytes, filename="visual_aid.png")
-        # image_url = upload_result["file_url"]
+        # Upload to GCS
+        with open(local_path, "rb") as f:
+            file_bytes = f.read()
+        upload_result = upload_file_to_gcs(file_bytes, filename=f"visual_aid_{uuid.uuid4().hex}.png")
+        image_url = upload_result["file_url"]
 
         outputs.append(VisualAidOutput(
-            image_url=local_path,
+            image_url=image_url,
             caption=request.prompt,
             topic=request.prompt.title(),
             grade_range="Primary School"
@@ -62,3 +62,20 @@ async def generate_visual_aid(request: VisualAidRequest) -> VisualAidOutput:
         
     # flattinng list of dicts
     return [o.model_dump() for o in outputs]
+
+BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+
+def upload_file_to_gcs(file_bytes: bytes, filename: str) -> dict:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(BUCKET_NAME)
+    unique_filename = f"{uuid.uuid4()}_{filename}"
+    blob = bucket.blob(unique_filename)
+    blob.upload_from_string(file_bytes, content_type="image/png")
+    url = blob.generate_signed_url(expiration=timedelta(hours=12))
+    logging.info(f"File uploaded to GCS bucket {BUCKET_NAME}")
+    logging.info(f"Generated signed URL: {url}")
+    return {
+        "file_url": url,
+        "file_type": "png",
+        "filename": unique_filename
+    }
