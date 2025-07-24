@@ -150,6 +150,6 @@ async def generate_worksheets(file_url: str, grade_input: str, language: str = "
     prompt = f"Generate simple, age-appropriate worksheets for the following grades: {grade_input}. The content should be in {language}. Use this extracted textbook text: {extracted_text}. Return a JSON object with keys grade_1 to grade_6, each containing the worksheet for that grade (if requested). {parser.get_format_instructions()}"
     llm_response = llm_lc.invoke(prompt)
     result = parser.parse(llm_response)
-    result.model_used = "gemini-2.5-flash"  # or whatever model you use
-    result.source_chunks = extracted_text  # if you want to include them
+    # result.model_used = "gemini-2.5-flash"  # or whatever model you use
+    # result.source_chunks = extracted_text  # if you want to include them
     return result
