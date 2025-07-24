@@ -165,4 +165,8 @@ async def generate_worksheets(file_url: str, grade_input: str, language: str = "
         extracted_text = agent.run(f"Translate the following text to {language}: {extracted_text}")
     prompt = f"Generate simple, age-appropriate worksheets for the following grades: {grade_input}. The content should be in {language}. Use this extracted textbook text: {extracted_text}. Return a JSON object with keys grade_1 to grade_6, each containing the worksheet for that grade (if requested)."
     result = await worksheet_agent.run([prompt])
-    return result.output.model_dump()
+    # grade_input could be "2,3,4" or "2"
+    requested_grades = [f"grade_{g.strip()}" for g in grade_input.split(",") if g.strip().isdigit()]
+    output = result.output.model_dump()
+    filtered_output = {k: v for k, v in output.items() if k in requested_grades}
+    return filtered_output
