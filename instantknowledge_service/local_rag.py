@@ -35,6 +35,7 @@ def extract_semantic_chunks(
     clean_text = re.sub(r"(https?://\S+)", "", raw_text)
     clean_text = re.sub(r"[^a-zA-Z\u0900-\u097F\u0C80-\u0CFF0-9\s.,!?;:'\"()\-]", "", clean_text)
     clean_text = clean_text.strip()
+    print(">>>>>>>>>>>>> Clean Text: ", clean_text)
     try:
         segmenter = pysbd.Segmenter(language=lang_key, clean=True)
         sentences = segmenter.segment(clean_text)
@@ -69,6 +70,7 @@ async def get_answer_with_uploaded_textbook(
     from vertexai.preview.language_models import TextEmbeddingModel, TextEmbeddingInput
     embed_model = TextEmbeddingModel.from_pretrained("text-embedding-005")
     chunks = extract_semantic_chunks(pdf_path, language=language)
+    print(">>>>>>>>> Chunks: ", chunks)
     if not chunks:
         raise ValueError("No readable text found in uploaded PDF.")
     embedded = []
@@ -76,6 +78,7 @@ async def get_answer_with_uploaded_textbook(
         emb = embed_model.get_embeddings([
             TextEmbeddingInput(task_type="RETRIEVAL_DOCUMENT", text=chunk)
         ])[0].values
+        # print(">>>>>>>>> Embedding: ", emb)
         embedded.append({"chunk": chunk, "embedding": emb})
     query_emb = embed_model.get_embeddings([
         TextEmbeddingInput(task_type="RETRIEVAL_QUERY", text=question)
@@ -84,6 +87,7 @@ async def get_answer_with_uploaded_textbook(
         [{"chunk": e["chunk"], "score": cosine_similarity(query_emb, e["embedding"])} for e in embedded],
         key=lambda x: x["score"],
         reverse=True)
+    # print(">>> Ranked Chunks: ", ranked_chunks)
     top_chunks = [r["chunk"] for r in ranked_chunks[:3]]
     # Fallback: if no good chunks
     if not top_chunks or all(r["score"] < 0.2 for r in ranked_chunks[:3]):

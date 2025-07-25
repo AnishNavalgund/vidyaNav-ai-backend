@@ -22,6 +22,7 @@ def ocr_tool(image_url: str) -> str:
         else:
             img = Image.open(image_url)
         text = pytesseract.image_to_string(img)
+        print(">>>>>>>>>>>>> Extracted OCR Text: ", text)
         return text if text.strip() else "[No text extracted from image]"
     except (UnidentifiedImageError, Exception) as e:
         return f"[OCR extraction failed: {str(e)}]"
@@ -39,7 +40,7 @@ def extract_text_from_pdf(pdf_url: str) -> str:
             text = " ".join([page.extract_text() or "" for page in reader.pages])
             if text.strip():
                 return text
-            # Fallback to OCR if no text extracted
+            # Fallback to OCR if no text is extracted
             logging.info("[Worksheet Agent] No text found in PDF, using OCR fallback.")
             pdf_bytes.seek(0)
             ocr_text = ""
@@ -154,6 +155,6 @@ async def generate_worksheets(file_url: str, grade_input: str, language: str = "
     prompt = f"Generate simple, age-appropriate worksheets for the following grades: {grade_input}. The content should be in {language}. Use this extracted textbook text: {extracted_text}. Return a JSON object with keys grade_1 to grade_6, each containing the worksheet for that grade (if requested). {parser.get_format_instructions()}"
     llm_response = llm_lc.invoke(prompt)
     result = parser.parse(llm_response)
-    # result.model_used = "gemini-2.5-flash"  # or whatever model you use
-    # result.source_chunks = extracted_text  # if you want to include them
+    # result.model_used = "gemini-2.5-flash"  
+    # result.source_chunks = extracted_text 
     return result
