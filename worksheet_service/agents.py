@@ -87,7 +87,9 @@ def translate_tool(text: str, target_language: str) -> str:
         "english": "en",
         "hindi": "hi",
         "kannada": "kn",
-        "german": "de"
+        "german": "de",
+        "italian": "it",
+        "french": "fr"
     }
     to_code = lang_map.get(target_language.lower(), "en")
     if to_code == "en":
@@ -103,7 +105,9 @@ def get_lang_code(language: str) -> str:
         "english": "en",
         "hindi": "hi",
         "kannada": "kn",
-        "german": "de"
+        "german": "de",
+        "italian": "it",
+        "french": "fr"
     }
     return lang_map.get(language.lower(), "en")
 

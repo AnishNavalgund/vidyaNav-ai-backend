@@ -19,7 +19,11 @@ def extract_semantic_chunks(
         "hindi": "hi",
         "hi": "hi",
         "german": "de",
-        "de": "de"
+        "de": "de",
+        "italian": "it",
+        "it": "it",
+        "french": "fr",
+        "fr": "fr"
     }
     lang_key = lang_map.get(language.lower().strip())
     if not lang_key:
