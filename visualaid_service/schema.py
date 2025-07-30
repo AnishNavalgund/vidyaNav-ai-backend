@@ -5,6 +5,6 @@ class VisualAidRequest(BaseModel):
     count: int = Field(default=1, ge=1, le=5, description="Number of image variations to generate")
 
 class VisualAidOutput(BaseModel):
-    image_url: HttpUrl = Field(..., description="Public or signed URL to the generated image")
+    image_url: str = Field(..., description="Public or signed URL to the generated image")
     caption: str = Field(..., description="Short description or original prompt")
     topic: str = Field(..., description="Title")
